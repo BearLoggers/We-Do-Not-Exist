@@ -6,15 +6,15 @@
 
 let consoleFont, titleFont, narratorFont;
 function preload() {
-    consoleFont = titleFont = narratorFont = loadFont("fonts/Inconsolata/Inconsolata-Regular.ttf");
+    consoleFont = titleFont = narratorFont = loadFont('fonts/Inconsolata/Inconsolata-Regular.ttf');
 }
 
 const consoleWindows = [];
 function setup() {
     createCanvas(windowWidth, windowHeight);
-    consoleWindows.push(new ConsoleWindow(100, 100, 300, 300, "Window #1"));
-    consoleWindows.push(new ConsoleWindow(450, 450, 300, 300, "Window #2"));
-    consoleWindows.push(new ConsoleWindow(700, 450, 300, 300, "Window #3"));
+    consoleWindows.push(new ConsoleWindow(100, 100, 300, 300, 'Window #1'));
+    consoleWindows.push(new ConsoleWindow(450, 450, 300, 300, 'Window #2'));
+    consoleWindows.push(new ConsoleWindow(700, 450, 300, 300, 'Window #3'));
 }
 
 const DragMode = {
@@ -39,8 +39,8 @@ function draw() {
             for (let edge in result.onEdges) {
                 if (result.onEdges[edge] == true) {
                     // Есть нахождение на границе edge.
-                    if (edge == Edges.LEFT || edge == Edges.RIGHT) cursor("ew-resize");
-                    else cursor("ns-resize");
+                    if (edge == Edges.LEFT || edge == Edges.RIGHT) cursor('ew-resize');
+                    else cursor('ns-resize');
 
                     atLeastOneEdgeFound = true;
                     dragging.mode  = DragMode.RESIZE;
@@ -151,12 +151,12 @@ function keyTyped() {
         /* Key - строка; a, b, c, Enter, Shift... */
 
         // Если это не обычные клавиши или Enter/Backspace - игнорируем
-        if (key.length > 0 && key != "Enter" && key != "Backspace") return;
+        if (key.length > 0 && key != 'Enter' && key != 'Backspace') return;
 
-        if (key == "Enter") char = '\n';
+        if (key == 'Enter') char = '\n';
         else char = key;
 
-        if (key != "Backspace") selectedWindow.content += char;
+        if (key != 'Backspace') selectedWindow.content += char;
         else selectedWindow.content =
             selectedWindow.content.substr(0, selectedWindow.content.length - 1);
     }
