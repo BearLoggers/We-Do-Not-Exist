@@ -21,7 +21,8 @@ class ConsoleWindow {
         this.width = width;
         this.height = height;
 
-        this.content = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.";
+        this.content = null;
+        this.contentHandler = null;
 
         this.title = title || "Window";
         this.stroke = stroke || color(255, 255, 255);
@@ -83,13 +84,13 @@ class ConsoleWindow {
             --------------
         */
 
-        push();
+        /*push();
         textSize(15);
         fill(255);
         strokeWeight(2);
         stroke(10);
         text(this.content, this.x + TP, this.y + TP + TBH, this.width - 2*TP, this.height - 2*TP - TBH);
-        pop();
+        pop();*/
     }
 
     mouseCheck(checkX, checkY) {
@@ -118,6 +119,16 @@ class ConsoleWindow {
             result.isInteractable = result.isInteractable || result.onEdges[edge];
 
         return result;
+    }
+
+    init(contentHandler) {
+        this.contentHandler = contentHandler;
+        this.contentHandler.init(this);
+        this.content = this.contentHandler.content;
+    }
+
+    updateContent() {
+        this.contentHandler.update();
     }
 }
 

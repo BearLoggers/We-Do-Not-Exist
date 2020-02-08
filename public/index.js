@@ -12,9 +12,9 @@ function preload() {
 const consoleWindows = [];
 function setup() {
     createCanvas(windowWidth, windowHeight);
-    consoleWindows.push(new ConsoleWindow(100, 100, 300, 300, 'Window #1'));
-    consoleWindows.push(new ConsoleWindow(450, 450, 300, 300, 'Window #2'));
-    consoleWindows.push(new ConsoleWindow(700, 450, 300, 300, 'Window #3'));
+    let cW = new ConsoleWindow(width / 2 - 250, 300, 400, 300, "Test Window");
+    cW.init(new BlinkingTerminal());
+    consoleWindows.push(cW);
 }
 
 const DragMode = {
@@ -26,11 +26,13 @@ let grabbedWindow = null;
 let selectedWindow = null;
 function draw() {
     background(0);
+    cursor('default');
 
     let atLeastOneEdgeFound = false;
     let atLeastOneSelected = false;
     for (let i = 0; i < consoleWindows.length; i++) {
         const cw = consoleWindows[i];
+        cw.updateContent();
         // Анализируем, где находится мышь (на краях/внутри/снаружи)
         if (grabbedWindow == null) {
             let result = cw.mouseCheck(mouseX, mouseY);
@@ -52,13 +54,16 @@ function draw() {
                 cw.stroke = color(100, 200, 100);
             }
 
-            if (result.overInsides && mouseIsPressed && !atLeastOneSelected) {
-                if (selectedWindow != null)
-                    selectedWindow.stroke = color(255);
+            if (result.overInsides) {
+                cursor('text');
+                if (mouseIsPressed && !atLeastOneSelected) {
+                    if (selectedWindow != null)
+                        selectedWindow.stroke = color(255);
 
-                selectedWindow = cw;
-                cw.stroke = color(100, 100, 200);
-                atLeastOneSelected = true;
+                    selectedWindow = cw;
+                    cw.stroke = color(100, 100, 200);
+                    atLeastOneSelected = true;
+                }
             }
 
             if (result.isInteractable && mouseIsPressed) {
@@ -75,7 +80,6 @@ function draw() {
     }
 
     if (!atLeastOneEdgeFound && !grabbedWindow) {
-        cursor('default');
         dragging.mode = DragMode.MOVE;
     }
 
@@ -84,6 +88,8 @@ function draw() {
             selectedWindow.stroke = color(255);
         selectedWindow = null;
     }
+
+    // if ((!atLeastOneEdgeFound && !grabbedWindow)) cursor('default');
 
     // Рисуем в обратном порядке (окна первее в массиве должны рисоваться выше)
     for (let i = consoleWindows.length - 1; i >= 0; i--)

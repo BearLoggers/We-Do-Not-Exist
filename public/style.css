@@ -1,3 +1,13 @@
+textarea {
+    resize: none;
+    background-color: black;
+    font-size: 15px;
+    color: white;
+    border: none;
+
+    outline: none;
+}
+
 body {
     padding: 0;
     margin: 0;
