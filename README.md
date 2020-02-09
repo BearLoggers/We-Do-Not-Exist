@@ -1,3 +1,3 @@
 # TextGame
 
-TODO: Readme
+Readme is still a TODO:
