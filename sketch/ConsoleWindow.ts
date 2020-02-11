@@ -17,14 +17,17 @@ enum Edges {
  *
  * @field overCross: находится ли данная точка на кресте
  *
- * @field overInsides: находится ли данная точка на внутреннем контенте
+ * @field overContent: находится ли данная точка на внутреннем контенте
  *
+ * @field isInside: находится ли курсор в целом внутри + на окраинах
 */
 interface CoordCheckResults {
     overTopBar: boolean,
     onEdges: boolean[],
     overCross: boolean,
-    overInsides: boolean
+    overContent: boolean,
+
+    isInside: boolean
 };
 
 /** EdgeGrabDistance - дистанция в пикселях, с которой можно начать "захват" на изменение размера окна */
@@ -111,6 +114,9 @@ class ConsoleWindow {
         strokeWeight(3);
         stroke(10);
         text(this.title, this.x, this.y, this.width, TBH);
+
+        /* Контент */
+        this.contentHandler.draw();
     }
 
     attachContent(ch: ContentHandler) {
@@ -125,7 +131,8 @@ class ConsoleWindow {
     }
 
     destroy() {
-        this.contentHandler.content.remove();
+        //this.contentHandler.content.remove();
+        console.log(`Window#${this.id} was removed`);
     }
 
     /** Проверяет, где находится координата относительно окна */
@@ -133,7 +140,8 @@ class ConsoleWindow {
         const point = new Point(checkX, checkY);
         const rX = this.x, rY = this.y, w = this.width, h = this.height;
 
-        let result: CoordCheckResults = {overTopBar: false, onEdges: [], overCross: false, overInsides: false};
+        let result: CoordCheckResults =
+            {overTopBar: false, onEdges: [], overCross: false, overContent: false, isInside: false};
         // Взаимодействовать можно за верхнюю полоску (без кнопки закрытия)
         result.overTopBar = point.isInsideRect(rX, rY, w - BS, TBH);
 
@@ -141,7 +149,7 @@ class ConsoleWindow {
         result.overCross = point.isInsideRect(rX + w - BS, rY, BS, BS);
 
         // Мышь внутри рабочей части окна
-        result.overInsides = point.isInsideRect(rX, rY + TBH, w, h - TBH);
+        result.overContent = point.isInsideRect(rX, rY + TBH, w, h - TBH);
 
         // Мышь в небольшой границе от краёв
         result.onEdges[Edges.TOP]    = point.isInsideRect(rX, rY - EGD, w, EGD);
@@ -149,9 +157,10 @@ class ConsoleWindow {
         result.onEdges[Edges.RIGHT]  = point.isInsideRect(rX + w, rY, EGD, h);
         result.onEdges[Edges.BOTTOM] = point.isInsideRect(rX, rY + h, w, EGD);
 
-        /*// Если мы захватили хотя бы одну границу - это считается за isInteractable
+        // Если мы хоть как-то можем взаимодействовать с окном - нужно поставить true в isInside
+        result.isInside = result.overTopBar || result.overCross || result.overContent;
         for (let edge in result.onEdges)
-            result.isInteractable = result.isInteractable || result.onEdges[edge];*/
+            result.isInside = result.isInside || result.onEdges[edge];
 
         return result;
     }

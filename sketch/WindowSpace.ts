@@ -1,6 +1,3 @@
-// TODO: Улучшить алгоритм выбора окон
-// FIXME: Перемещение окон
-
 enum Action {
     NONE,
     MOVE,
@@ -60,6 +57,9 @@ class WindowSpace {
     /** Окно, на котором произведён фокус контента */
     focusedWindow: ConsoleWindow = null;
 
+    /** Указывает, если мышь сейчас перетаскивают с зажатой кнопкой мыши */
+    isDragging: boolean = false;
+
     draw() {
         // Рисуем в обратном порядке (окна первее в массиве должны рисоваться выше)
         for (let i = this.consoleWindows.length - 1; i >= 0; i--) {
@@ -76,6 +76,7 @@ class WindowSpace {
 
     update() {
         if (this.isActive) {
+            this.forceUpdateCursor("default");
             for (let i = 0; i < this.consoleWindows.length; i++) {
                 const cw = this.consoleWindows[i];
 
@@ -85,30 +86,50 @@ class WindowSpace {
         }
     }
 
-    mouseReleased() {
-        // Сбрасываем все предыдущие результаты из AnalyzeMouse
-        cursor('default');
-        this.currentDragMode.action = Action.NONE;
+    currentCursor: string = "default";
+    /**
+     * Обновляет текущий курсор мыши ТОЛЬКО если до этого он был default-ным
+     * @param newCursor новый курсор
+     */
+    safeUpdateCursor(newCursor: string) {
+        if (this.currentCursor != "default") return;
+
+        cursor(newCursor);
+        this.currentCursor = newCursor;
     }
 
     /**
+     * Обновляет текущий курсор мыши независимо от его предыдущего состояния
+     * @param newCursor новый курсор
+     */
+    forceUpdateCursor(newCursor: string) {
+        cursor(newCursor);
+        this.currentCursor = newCursor;
+    }
+
+    prevMouseResult: boolean = false;
+    /**
      * Анализирует позицию мыши на конкретном окне и возвращает true, если с ней можно
-     * произвести какие-то взаимодействия
+     * произвести какие-то взаимодействия.
+     * Если мышь производит drag, то возвращается предыдущий результат
      * @param cw консольное окно внутри массива consoleWindows, которое нужно проверить
      */
     analyzeMouse(cw: ConsoleWindow): boolean {
+        if (this.isDragging) return this.prevMouseResult;
+
         // Получаем новые
         let results: CoordCheckResults = cw.coordCheck(mouseX, mouseY);
 
         // Можно ли взаимодействовать с этим окном?
-        let canBeInteracted = false;
+        //let canBeInteracted = false;
 
         // Проверка на нажатие и наводки на крест
         if (results.overCross) {
-            cursor("pointer");
+            this.safeUpdateCursor("pointer");
 
             if (mouseIsPressed) {
                 this.removeWindow(cw.id);
+                this.prevMouseResult = false;
                 return false;
             }
         }
@@ -118,29 +139,32 @@ class WindowSpace {
             if (results.onEdges[i]) {
                 // Мы на границе "i"
 
-                if (i == Edges.LEFT || i == Edges.RIGHT) cursor("ew-resize");
-                else cursor("ns-resize");
+                if (i == Edges.LEFT || i == Edges.RIGHT) this.safeUpdateCursor("ew-resize");
+                else this.safeUpdateCursor("ns-resize");
 
                 if (mouseIsPressed) {
                     this.currentDragMode.action = Action.RESIZE;
                     this.currentDragMode.resizeEdge = i;
                     this.selectedWindow = cw;
 
-                    canBeInteracted = true;
+                    //canBeInteracted = true;
                 }
             }
         }
 
         // Проверка, если мышь находится на верхней полоске
-        if (results.overTopBar && mouseIsPressed) {
-            this.currentDragMode.action = Action.MOVE;
-            this.selectedWindow = cw;
+        if (results.overTopBar) {
+            this.safeUpdateCursor("default");
+            if (mouseIsPressed) {
+                this.currentDragMode.action = Action.MOVE;
+                this.selectedWindow = cw;
 
-            canBeInteracted = true;
+                //canBeInteracted = true;
 
-            // У последнего окна должен быть выше приоритет для дальнейшего захвата
-            // Перемещаем его из своего место на первое
-            this.moveOnTop(cw);
+                // У последнего окна должен быть выше приоритет для дальнейшего захвата
+                // Перемещаем его из своего место на первое
+                this.moveOnTop(cw);
+            }
         }
         // Если мышь не над верхней полоской и до этого мы не навели курсор на края - убираем selectedWindow
         else if (this.currentDragMode.action != Action.RESIZE) {
@@ -148,26 +172,40 @@ class WindowSpace {
         }
 
         // Проверка, если мышь находится внутри контента
-        if (results.overInsides) {
-            cursor("text");
+        if (results.overContent) {
+            this.safeUpdateCursor("text");
             if (mouseIsPressed) {
                 this.focusedWindow = cw;
-                canBeInteracted = true;
+                //canBeInteracted = true;
+
+                /*// У последнего окна должен быть выше приоритет для дальнейшего захвата
+                // Перемещаем его из своего место на первое
+                this.moveOnTop(cw);*/
             }
         }
 
-        return canBeInteracted;
+        //this.prevMouseResult = canBeInteracted;
+        //return canBeInteracted;
+
+        this.prevMouseResult = results.isInside;
+        return results.isInside;
     }
 
+    onMousePress() { }
+
     onMouseDrag() {
+        this.isDragging = true;
+
         let sW = this.selectedWindow;
 
         if (sW) {
+            // this.isDraggingWindow = true;
+
             const dX = (mouseX - pmouseX), dY = (mouseY - pmouseY);
             if (this.currentDragMode.action == Action.MOVE) {
                 sW.move(sW.x + dX, sW.y + dY);
             }
-            else {
+            else if (this.currentDragMode.action == Action.RESIZE) {
                 if (this.currentDragMode.resizeEdge == Edges.TOP) {
                     sW.height -= dY;
                     sW.y += dY;
@@ -190,6 +228,15 @@ class WindowSpace {
                 if (sW.y < 0) sW.y = 0;
             }
         }
+    }
+
+    onMouseRelease() {
+        // Сбрасываем все предыдущие результаты из AnalyzeMouse
+        this.forceUpdateCursor("default");
+        this.currentDragMode.action = Action.NONE;
+        this.selectedWindow = null;
+
+        this.isDragging = false;
     }
 
 }
