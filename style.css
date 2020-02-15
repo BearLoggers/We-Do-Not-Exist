@@ -3,5 +3,9 @@
     margin: 0;
 
     color: white;
-    background-color: black;
+    /* background-color: black; */
+}
+
+body {
+    background-color: rgb(203, 203, 255);
 }

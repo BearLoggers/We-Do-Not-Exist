@@ -48,6 +48,8 @@ class ConsoleWindow {
     width: number;
     height: number;
 
+    deleteFlag: boolean = false;
+
     stroke: p5.Color;
     title: string;
 
@@ -132,7 +134,13 @@ class ConsoleWindow {
 
     destroy() {
         //this.contentHandler.content.remove();
-        console.log(`Window#${this.id} was removed`);
+        console.log(`Window#${this.id} was marked to be removed`);
+        this.deleteFlag = true;
+    }
+
+    /** Получить нажатие на клавишу, отправленное от WindowSpace */
+    receiveKeyEvent(keyStroke: KeyboardEvent) {
+        this.contentHandler.receiveKeyEvent(keyStroke);
     }
 
     /** Проверяет, где находится координата относительно окна */
